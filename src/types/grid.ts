@@ -4,6 +4,7 @@ export interface GridConfig {
   cellSize: number
   showRowNumbers: boolean
   showColNumbers: boolean
+  patternType: 'flat' | 'round'
 }
 
 export const DEFAULT_GRID_CONFIG: GridConfig = {
@@ -12,4 +13,14 @@ export const DEFAULT_GRID_CONFIG: GridConfig = {
   cellSize: 30,
   showRowNumbers: true,
   showColNumbers: true,
+  patternType: 'flat',
+}
+
+export interface RepeatRegion {
+  id: string
+  startRow: number
+  endRow: number
+  startCol: number
+  endCol: number
+  count: number
 }

@@ -2,10 +2,28 @@ import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
 import type { WrittenRow } from '@/lib/written/converter'
 
+function addWatermarkToPage(pdf: jsPDF, watermark: string) {
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const pageHeight = pdf.internal.pageSize.getHeight()
+  pdf.saveGraphicsState()
+  pdf.setTextColor(200, 200, 200)
+  pdf.setFontSize(14)
+  // Draw diagonal watermark text in a grid pattern
+  const step = 45
+  for (let y = 0; y < pageHeight + step; y += step) {
+    for (let x = 0; x < pageWidth + step; x += step) {
+      pdf.text(watermark, x, y, { angle: 45 })
+    }
+  }
+  pdf.restoreGraphicsState()
+  pdf.setTextColor(0)
+}
+
 export async function exportToPdf(
   canvasElement: HTMLElement,
   writtenRows: WrittenRow[],
-  title: string
+  title: string,
+  watermark?: string
 ): Promise<void> {
   const canvas = await html2canvas(canvasElement, {
     scale: 2,
@@ -17,6 +35,14 @@ export async function exportToPdf(
   const pdf = new jsPDF('p', 'mm', 'a4')
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
+
+  // PDF metadata (for leak tracking when watermark is set)
+  pdf.setProperties({
+    title,
+    creator: 'KnitCanvas',
+    subject: watermark ? `Licensed to: ${watermark}` : '',
+    keywords: watermark ? `buyer:${watermark}` : '',
+  })
 
   // 헤더
   pdf.setFontSize(16)
@@ -50,6 +76,8 @@ export async function exportToPdf(
     pdf.addImage(imgData, 'PNG', 10, 28, imgWidth, imgHeight)
   }
 
+  if (watermark) addWatermarkToPage(pdf, watermark)
+
   // 2페이지: 서술형 텍스트
   if (writtenRows.length > 0) {
     pdf.addPage()
@@ -65,8 +93,10 @@ export async function exportToPdf(
       if (y > pageHeight - 15) {
         pdf.addPage()
         y = 15
+        if (watermark) addWatermarkToPage(pdf, watermark)
       }
     }
+    if (watermark) addWatermarkToPage(pdf, watermark)
   }
 
   pdf.save(`${title}.pdf`)

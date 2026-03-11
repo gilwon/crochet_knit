@@ -2,6 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { MoreHorizontal, Trash2 } from 'lucide-react'
+import PatternThumbnail from './PatternThumbnail'
+import type { PlacedSymbol } from '@/types/symbol'
+import type { GridConfig } from '@/types/grid'
+import { DEFAULT_GRID_CONFIG } from '@/types/grid'
 
 interface ProjectCardProps {
   project: {
@@ -9,59 +16,61 @@ interface ProjectCardProps {
     title: string
     updated_at: string
   }
+  symbols?: PlacedSymbol[]
+  gridConfig?: GridConfig
   onDelete: (id: string) => void
 }
 
-export default function ProjectCard({ project, onDelete }: ProjectCardProps) {
+export default function ProjectCard({ project, symbols, gridConfig, onDelete }: ProjectCardProps) {
   const [menuOpen, setMenuOpen] = useState(false)
-
   const timeAgo = getTimeAgo(project.updated_at)
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
-      <Link href={`/editor/${project.id}`} className="block p-4">
-        {/* Thumbnail placeholder */}
-        <div className="w-full h-32 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
-          <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 9h16M9 4v16" />
-          </svg>
-        </div>
-        <h3 className="text-sm font-medium text-gray-800 truncate">
-          {project.title}
-        </h3>
-        <p className="text-xs text-gray-400 mt-1">{timeAgo} 수정</p>
+    <Card className="overflow-hidden hover:shadow-md transition-shadow group">
+      <Link href={`/editor/${project.id}`} className="block">
+        <CardContent className="p-0">
+          <div className="w-full h-36 bg-muted overflow-hidden">
+            <PatternThumbnail
+              symbols={symbols ?? []}
+              gridConfig={gridConfig ?? DEFAULT_GRID_CONFIG}
+              width={320}
+              height={144}
+            />
+          </div>
+          <div className="px-4 pt-3 pb-1">
+            <h3 className="text-sm font-medium truncate">{project.title}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{timeAgo} 수정</p>
+          </div>
+        </CardContent>
       </Link>
 
-      {/* Menu */}
-      <div className="relative px-4 pb-3">
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="text-gray-400 hover:text-gray-600 text-sm"
-        >
-          ...
-        </button>
-        {menuOpen && (
-          <>
-            <div
-              className="fixed inset-0"
-              onClick={() => setMenuOpen(false)}
-            />
-            <div className="absolute bottom-8 left-4 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10">
-              <button
-                onClick={() => {
-                  setMenuOpen(false)
-                  onDelete(project.id)
-                }}
-                className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
-              >
-                삭제
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+      <CardFooter className="px-4 pb-3 pt-1">
+        <div className="relative ml-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 bottom-8 z-20 w-36 bg-card border border-border rounded-md shadow-md py-1">
+                <button
+                  onClick={() => { setMenuOpen(false); onDelete(project.id) }}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  삭제
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
   )
 }
 

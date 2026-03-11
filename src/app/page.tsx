@@ -1,18 +1,20 @@
+'use client'
+
 import Link from 'next/link'
+import { buttonVariants } from '@/components/ui/button'
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <main className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">KnitCanvas</h1>
-        <p className="text-lg text-gray-600 mb-8">
-          그리면 도안이 되고, 쓰면 완성되는 전문 뜨개 편집 툴
-        </p>
-        <Link
-          href="/editor"
-          className="inline-block px-6 py-3 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
-        >
-          에디터 시작하기
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <main className="text-center space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-semibold tracking-tight">KnitCanvas</h1>
+          <p className="text-muted-foreground text-lg">
+            그리면 도안이 되고, 쓰면 완성되는 전문 뜨개 편집 툴
+          </p>
+        </div>
+        <Link href="/dashboard" className={buttonVariants({ size: 'lg' })}>
+          시작하기
         </Link>
       </main>
     </div>

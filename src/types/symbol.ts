@@ -15,4 +15,5 @@ export interface PlacedSymbol {
   row: number
   col: number
   rotation: number
+  color?: string
 }

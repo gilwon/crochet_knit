@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useEditorStore } from '@/stores/useEditorStore'
-import {
-  createVersion,
-  getVersions,
-  getVersion,
-} from '@/lib/supabase/projects'
+import { createVersion, getVersions, getVersion } from '@/lib/supabase/projects'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { ChevronDown, ChevronUp, RotateCcw, Save } from 'lucide-react'
 
 interface VersionItem {
   id: string
@@ -16,13 +15,14 @@ interface VersionItem {
 
 export default function VersionPanel() {
   const [versions, setVersions] = useState<VersionItem[]>([])
-  const [open, setOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const projectId = useEditorStore((s) => s.projectId)
-  const symbols = useEditorStore((s) => s.symbols)
+  const [open, setOpen]         = useState(false)
+  const [saving, setSaving]     = useState(false)
+
+  const projectId  = useEditorStore((s) => s.projectId)
+  const symbols    = useEditorStore((s) => s.symbols)
   const gridConfig = useEditorStore((s) => s.gridConfig)
   const loadProject = useEditorStore((s) => s.loadProject)
-  const title = useEditorStore((s) => s.title)
+  const title      = useEditorStore((s) => s.title)
 
   const loadVersions = async () => {
     if (!projectId) return
@@ -59,51 +59,57 @@ export default function VersionPanel() {
   if (!projectId) return null
 
   return (
-    <div className="border-t border-gray-200 p-3">
+    <div className="shrink-0">
       <button
         onClick={() => setOpen(!open)}
-        className="text-sm font-semibold text-gray-700 w-full text-left flex items-center justify-between"
+        className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:bg-accent transition-colors"
       >
         버전 히스토리
-        <span className="text-xs text-gray-400">{open ? '▲' : '▼'}</span>
+        {open ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
       </button>
 
       {open && (
-        <div className="mt-2 space-y-2">
-          <button
+        <div className="px-3 pb-3 space-y-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-8 gap-1.5 text-xs"
             onClick={handleSaveVersion}
             disabled={saving}
-            className="w-full px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 rounded-md transition-colors"
           >
+            <Save className="w-3.5 h-3.5" />
             {saving ? '저장 중...' : '현재 버전 저장'}
-          </button>
+          </Button>
 
           {versions.length === 0 ? (
-            <p className="text-xs text-gray-400">저장된 버전이 없습니다.</p>
+            <p className="text-xs text-muted-foreground py-1">저장된 버전이 없습니다.</p>
           ) : (
-            <div className="max-h-40 overflow-y-auto space-y-1">
-              {versions.map((v) => (
-                <div
-                  key={v.id}
-                  className="flex items-center justify-between text-xs p-2 rounded hover:bg-gray-50"
-                >
-                  <div>
-                    <span className="font-medium text-gray-700">
-                      {v.label || '이름 없음'}
-                    </span>
-                    <span className="text-gray-400 ml-2">
-                      {new Date(v.created_at).toLocaleDateString('ko')}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleRestore(v.id)}
-                    className="text-blue-600 hover:underline"
+            <ScrollArea className="max-h-36">
+              <div className="space-y-0.5">
+                {versions.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md hover:bg-accent"
                   >
-                    복원
-                  </button>
-                </div>
-              ))}
-            </div>
+                    <div>
+                      <span className="font-medium">{v.label || '이름 없음'}</span>
+                      <span className="text-muted-foreground ml-2">
+                        {new Date(v.created_at).toLocaleDateString('ko')}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleRestore(v.id)}
+                      title="이 버전으로 복원"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </div>
       )}

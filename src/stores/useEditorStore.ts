@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
 import type { PlacedSymbol } from '@/types/symbol'
-import type { GridConfig } from '@/types/grid'
+import type { GridConfig, RepeatRegion } from '@/types/grid'
 import { DEFAULT_GRID_CONFIG } from '@/types/grid'
 
 interface EditorState {
@@ -15,12 +15,15 @@ interface EditorState {
   future: PlacedSymbol[][]
   saveStatus: 'saved' | 'saving' | 'unsaved' | 'error'
   zoom: number
+  activeColor: string
   activePlacementSymbolId: string | null
+  repeatRegions: RepeatRegion[]
 
   addSymbol: (symbol: Omit<PlacedSymbol, 'id'>) => void
   removeSymbols: (ids: string[]) => void
   moveSymbol: (id: string, row: number, col: number) => void
   rotateSymbol: (id: string) => void
+  setSymbolRotation: (id: string, rotation: number) => void
   selectSymbols: (ids: string[]) => void
   clearSelection: () => void
   copySelected: () => void
@@ -31,7 +34,12 @@ interface EditorState {
   setGridConfig: (config: Partial<GridConfig>) => void
   setZoom: (zoom: number) => void
   setSaveStatus: (status: EditorState['saveStatus']) => void
+  setActiveColor: (color: string) => void
+  setSymbolColor: (id: string, color: string) => void
   setActivePlacementSymbolId: (id: string | null) => void
+  addRepeatRegion: (region: Omit<RepeatRegion, 'id'>) => void
+  updateRepeatRegion: (id: string, updates: Partial<Omit<RepeatRegion, 'id'>>) => void
+  removeRepeatRegion: (id: string) => void
   loadProject: (data: {
     id: string
     title: string
@@ -59,7 +67,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   future: [],
   saveStatus: 'saved',
   zoom: 1,
+  activeColor: '#1f2937',
   activePlacementSymbolId: null,
+  repeatRegions: [],
 
   addSymbol: (symbol) =>
     set((state) => {
@@ -67,7 +77,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       const filtered = state.symbols.filter(
         (s) => !(s.row === symbol.row && s.col === symbol.col)
       )
-      const newSymbol: PlacedSymbol = { ...symbol, id: uuidv4() }
+      const newSymbol: PlacedSymbol = {
+        ...symbol,
+        id: uuidv4(),
+        color: symbol.color ?? state.activeColor,
+      }
       return {
         ...pushHistory(state),
         symbols: [...filtered, newSymbol],
@@ -103,6 +117,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       ...pushHistory(state),
       symbols: state.symbols.map((s) =>
         s.id === id ? { ...s, rotation: (s.rotation + 90) % 360 } : s
+      ),
+      saveStatus: 'unsaved',
+    })),
+
+  setSymbolRotation: (id, rotation) =>
+    set((state) => ({
+      ...pushHistory(state),
+      symbols: state.symbols.map((s) =>
+        s.id === id ? { ...s, rotation: ((rotation % 360) + 360) % 360 } : s
       ),
       saveStatus: 'unsaved',
     })),
@@ -160,6 +183,26 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   setActivePlacementSymbolId: (id) => set({ activePlacementSymbolId: id }),
 
+  addRepeatRegion: (region) =>
+    set((state) => ({
+      repeatRegions: [...state.repeatRegions, { ...region, id: uuidv4() }],
+      saveStatus: 'unsaved',
+    })),
+
+  updateRepeatRegion: (id, updates) =>
+    set((state) => ({
+      repeatRegions: state.repeatRegions.map((r) =>
+        r.id === id ? { ...r, ...updates } : r
+      ),
+      saveStatus: 'unsaved',
+    })),
+
+  removeRepeatRegion: (id) =>
+    set((state) => ({
+      repeatRegions: state.repeatRegions.filter((r) => r.id !== id),
+      saveStatus: 'unsaved',
+    })),
+
   setTitle: (title) => set({ title, saveStatus: 'unsaved' }),
   setGridConfig: (config) =>
     set((state) => ({
@@ -168,18 +211,26 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     })),
   setZoom: (zoom) => set({ zoom: Math.max(0.25, Math.min(4, zoom)) }),
   setSaveStatus: (saveStatus) => set({ saveStatus }),
+  setActiveColor: (color) => set({ activeColor: color }),
+  setSymbolColor: (id, color) =>
+    set((state) => ({
+      ...pushHistory(state),
+      symbols: state.symbols.map((s) => (s.id === id ? { ...s, color } : s)),
+      saveStatus: 'unsaved',
+    })),
 
   loadProject: ({ id, title, gridConfig, symbols }) =>
     set({
       projectId: id,
       title,
-      gridConfig,
+      gridConfig: { ...DEFAULT_GRID_CONFIG, ...gridConfig },
       symbols,
       selectedIds: [],
       past: [],
       future: [],
       saveStatus: 'saved',
       activePlacementSymbolId: null,
+      repeatRegions: [],
     }),
 
   clear: () =>

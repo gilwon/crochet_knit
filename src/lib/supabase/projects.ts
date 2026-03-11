@@ -7,7 +7,7 @@ const supabase = createClient()
 export async function getProjects() {
   const { data, error } = await supabase
     .from('projects')
-    .select('id, title, updated_at')
+    .select('id, title, updated_at, symbols, grid_config')
     .order('updated_at', { ascending: false })
   return { data, error }
 }

@@ -26,6 +26,7 @@ export default function SymbolRenderer({
   const { x, y } = gridToPixel(symbol.row, symbol.col, cellSize)
   const w = def.width * cellSize
   const h = def.height * cellSize
+  const symbolColor = symbol.color ?? '#1f2937'
 
   return (
     <Group
@@ -66,21 +67,11 @@ export default function SymbolRenderer({
           dash={[4, 2]}
         />
       )}
-      {/* Cell background */}
-      <Rect
-        x={0}
-        y={0}
-        width={w}
-        height={h}
-        fill="white"
-        stroke="#e5e7eb"
-        strokeWidth={0.5}
-      />
       {/* Symbol SVG path */}
       <Path
         data={def.svgPath}
         fill="transparent"
-        stroke="#1f2937"
+        stroke={symbolColor}
         strokeWidth={2}
         scaleX={cellSize / 30}
         scaleY={(cellSize * def.height) / 30}

@@ -5,6 +5,7 @@ import { Stage, Layer } from 'react-konva'
 import { useEditorStore } from '@/stores/useEditorStore'
 import GridOverlay from './GridOverlay'
 import SymbolRenderer from './SymbolRenderer'
+import RepeatOverlay from './RepeatOverlay'
 import { snapToGrid } from '@/lib/grid/snap'
 
 export default function Canvas() {
@@ -21,6 +22,7 @@ export default function Canvas() {
     setZoom,
     activePlacementSymbolId,
     setActivePlacementSymbolId,
+    repeatRegions,
   } = useEditorStore()
 
   const { rows, cols, cellSize } = gridConfig
@@ -113,6 +115,7 @@ export default function Canvas() {
       >
         <Layer x={padding} y={padding}>
           <GridOverlay gridConfig={gridConfig} />
+          <RepeatOverlay repeatRegions={repeatRegions} cellSize={cellSize} />
           {symbols.map((symbol) => (
             <SymbolRenderer
               key={symbol.id}

@@ -9,7 +9,8 @@ export interface WrittenRow {
 
 export function toWritten(
   symbols: PlacedSymbol[],
-  _gridConfig: GridConfig
+  _gridConfig: GridConfig,
+  lang: 'ko' | 'en' = 'ko'
 ): WrittenRow[] {
   if (symbols.length === 0) return []
 
@@ -43,7 +44,9 @@ export function toWritten(
         count++
       }
       const def = getSymbolDefinition(currentId)
-      const name = def?.name || currentId
+      const name = lang === 'en'
+        ? (def?.abbreviation || def?.nameEn || currentId)
+        : (def?.name || currentId)
       parts.push(count > 1 ? `${name} ${count}` : name)
       i += count
     }

@@ -4,103 +4,143 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useEditorStore } from '@/stores/useEditorStore'
 import ExportModal from './ExportModal'
+import GridSettingsDialog from './GridSettingsDialog'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { ArrowLeft, Undo2, Redo2, Minus, Plus, FileDown, Grid2x2, Circle, Calculator } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import GaugeCalculatorDialog from './GaugeCalculatorDialog'
+
+const saveStatusMap = {
+  saved:   { label: '저장됨',   variant: 'secondary' },
+  saving:  { label: '저장 중…', variant: 'outline'   },
+  unsaved: { label: '미저장',   variant: 'outline'   },
+  error:   { label: '저장 실패', variant: 'destructive' },
+} as const
 
 export default function TopBar() {
-  const [exportOpen, setExportOpen] = useState(false)
-  const title = useEditorStore((s) => s.title)
-  const setTitle = useEditorStore((s) => s.setTitle)
-  const undo = useEditorStore((s) => s.undo)
-  const redo = useEditorStore((s) => s.redo)
-  const past = useEditorStore((s) => s.past)
-  const future = useEditorStore((s) => s.future)
+  const [exportOpen, setExportOpen]   = useState(false)
+  const [gridOpen, setGridOpen]       = useState(false)
+  const [gaugeOpen, setGaugeOpen]     = useState(false)
+  const gridConfig = useEditorStore((s) => s.gridConfig)
+  const title      = useEditorStore((s) => s.title)
+  const setTitle   = useEditorStore((s) => s.setTitle)
+  const undo       = useEditorStore((s) => s.undo)
+  const redo       = useEditorStore((s) => s.redo)
+  const past       = useEditorStore((s) => s.past)
+  const future     = useEditorStore((s) => s.future)
   const saveStatus = useEditorStore((s) => s.saveStatus)
-  const zoom = useEditorStore((s) => s.zoom)
-  const setZoom = useEditorStore((s) => s.setZoom)
+  const zoom       = useEditorStore((s) => s.zoom)
+  const setZoom    = useEditorStore((s) => s.setZoom)
 
-  const saveStatusText = {
-    saved: '저장됨',
-    saving: '저장 중...',
-    unsaved: '저장 안됨',
-    error: '저장 실패',
-  }
-
-  const saveStatusColor = {
-    saved: 'text-green-600',
-    saving: 'text-yellow-600',
-    unsaved: 'text-gray-400',
-    error: 'text-red-600',
-  }
+  const status = saveStatusMap[saveStatus]
 
   return (
-    <div className="h-12 border-b border-gray-200 bg-white flex items-center justify-between px-4">
-      {/* Left: Back + Title */}
-      <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="text-gray-400 hover:text-gray-600">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </Link>
+    <div className="h-12 border-b bg-card flex items-center gap-2 px-3 shrink-0">
+      {/* Back */}
+      <Link
+        href="/dashboard"
+        className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'h-8 w-8 shrink-0')}
+      >
+        <ArrowLeft className="w-4 h-4" />
+      </Link>
+
+      <Separator orientation="vertical" className="h-5" />
+
+      {/* Title + save status */}
+      <div className="flex items-center gap-2 min-w-0">
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="text-sm font-medium text-gray-800 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-2 py-1"
+          className="text-sm font-medium bg-transparent border-none outline-none focus-visible:ring-1 focus-visible:ring-ring rounded px-1.5 py-0.5 min-w-0 max-w-48 truncate"
         />
-        <span className={`text-xs ${saveStatusColor[saveStatus]}`}>
-          {saveStatusText[saveStatus]}
-        </span>
+        <Badge variant={status.variant} className="shrink-0 text-xs py-0">
+          {status.label}
+        </Badge>
       </div>
 
-      {/* Center: Undo/Redo */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={undo}
-          disabled={past.length === 0}
-          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+      <Separator orientation="vertical" className="h-5" />
+
+      {/* Undo / Redo */}
+      <div className="flex items-center gap-0.5">
+        <Button
+          variant="ghost" size="icon" className="h-8 w-8"
+          onClick={undo} disabled={past.length === 0}
           title="실행 취소 (Ctrl+Z)"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a4 4 0 014 4v2M3 10l4-4M3 10l4 4" />
-          </svg>
-        </button>
-        <button
-          onClick={redo}
-          disabled={future.length === 0}
-          className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+          <Undo2 className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost" size="icon" className="h-8 w-8"
+          onClick={redo} disabled={future.length === 0}
           title="재실행 (Ctrl+Shift+Z)"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10H11a4 4 0 00-4 4v2M21 10l-4-4M21 10l-4 4" />
-          </svg>
-        </button>
+          <Redo2 className="w-4 h-4" />
+        </Button>
       </div>
 
-      {/* Right: Zoom + Export */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          <button
-            onClick={() => setZoom(zoom - 0.1)}
-            className="px-1 hover:bg-gray-100 rounded"
-          >
-            -
-          </button>
-          <span className="w-10 text-center">{Math.round(zoom * 100)}%</span>
-          <button
-            onClick={() => setZoom(zoom + 0.1)}
-            className="px-1 hover:bg-gray-100 rounded"
-          >
-            +
-          </button>
-        </div>
-        <button
-          onClick={() => setExportOpen(true)}
-          className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Zoom */}
+      <div className="flex items-center gap-0.5">
+        <Button
+          variant="ghost" size="icon" className="h-7 w-7"
+          onClick={() => setZoom(zoom - 0.1)}
         >
-          PDF 내보내기
-        </button>
+          <Minus className="w-3.5 h-3.5" />
+        </Button>
+        <span className="text-xs text-muted-foreground w-12 text-center tabular-nums">
+          {Math.round(zoom * 100)}%
+        </span>
+        <Button
+          variant="ghost" size="icon" className="h-7 w-7"
+          onClick={() => setZoom(zoom + 0.1)}
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </Button>
       </div>
+
+      <Separator orientation="vertical" className="h-5" />
+
+      {/* Gauge Calculator */}
+      <Button
+        variant="outline" size="sm" className="h-8 gap-1.5"
+        onClick={() => setGaugeOpen(true)}
+        title="게이지 계산기"
+      >
+        <Calculator className="w-3.5 h-3.5" />
+        계산기
+      </Button>
+
+      <Separator orientation="vertical" className="h-5" />
+
+      {/* Grid settings */}
+      <Button
+        variant="outline" size="sm" className="h-8 gap-1.5"
+        onClick={() => setGridOpen(true)}
+        title="그리드 설정"
+      >
+        {gridConfig.patternType === 'round'
+          ? <Circle className="w-3.5 h-3.5" />
+          : <Grid2x2 className="w-3.5 h-3.5" />
+        }
+        {gridConfig.rows}×{gridConfig.cols}
+      </Button>
+
+      <Separator orientation="vertical" className="h-5" />
+
+      {/* Export */}
+      <Button size="sm" className="h-8 gap-1.5" onClick={() => setExportOpen(true)}>
+        <FileDown className="w-3.5 h-3.5" />
+        PDF 내보내기
+      </Button>
 
       <ExportModal open={exportOpen} onClose={() => setExportOpen(false)} />
+      <GridSettingsDialog open={gridOpen} onClose={() => setGridOpen(false)} />
+      <GaugeCalculatorDialog open={gaugeOpen} onClose={() => setGaugeOpen(false)} />
     </div>
   )
 }
